@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Hosu35HioasssIndexRouteImport } from './routes/Hosu35Hioasss.index'
+import { Route as Hosu35HioasssDashboardRouteImport } from './routes/Hosu35Hioasss.dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const Hosu35HioasssIndexRoute = Hosu35HioasssIndexRouteImport.update({
   path: '/Hosu35Hioasss/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Hosu35HioasssDashboardRoute = Hosu35HioasssDashboardRouteImport.update({
+  id: '/Hosu35Hioasss/dashboard',
+  path: '/Hosu35Hioasss/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
   '/Hosu35Hioasss/': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
   '/Hosu35Hioasss': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
   '/Hosu35Hioasss/': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/Hosu35Hioasss/'
+  fullPaths: '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/Hosu35Hioasss'
-  id: '__root__' | '/' | '/Hosu35Hioasss/'
+  to: '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss'
+  id: '__root__' | '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  Hosu35HioasssDashboardRoute: typeof Hosu35HioasssDashboardRoute
   Hosu35HioasssIndexRoute: typeof Hosu35HioasssIndexRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Hosu35HioasssIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/Hosu35Hioasss/dashboard': {
+      id: '/Hosu35Hioasss/dashboard'
+      path: '/Hosu35Hioasss/dashboard'
+      fullPath: '/Hosu35Hioasss/dashboard'
+      preLoaderRoute: typeof Hosu35HioasssDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  Hosu35HioasssDashboardRoute: Hosu35HioasssDashboardRoute,
   Hosu35HioasssIndexRoute: Hosu35HioasssIndexRoute,
 }
 export const routeTree = rootRouteImport
