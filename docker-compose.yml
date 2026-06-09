@@ -1,0 +1,64 @@
+version: "3.9"
+
+# Basnion local stack
+# - web : TanStack Start app on http://localhost:3618
+# - db  : MySQL 8 local database on localhost:3306
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: basnion-web
+    restart: unless-stopped
+    ports:
+      - "3618:3618"
+    environment:
+      - NODE_ENV=production
+      - PORT=3618
+      - HOST=0.0.0.0
+      # Supabase (Lovable Cloud) — fill in via .env
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Local MySQL connection (optional — for custom server features)
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=basnion
+      - MYSQL_USER=basnion
+      - MYSQL_PASSWORD=basnion_secret
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [basnion-net]
+
+  db:
+    image: mysql:8.0
+    container_name: basnion-mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootroot
+      MYSQL_DATABASE: basnion
+      MYSQL_USER: basnion
+      MYSQL_PASSWORD: basnion_secret
+    volumes:
+      - basnion-mysql-data:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootroot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [basnion-net]
+
+volumes:
+  basnion-mysql-data:
+
+networks:
+  basnion-net:
+    driver: bridge
