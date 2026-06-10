@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --frozen-lockfile
 
 # ── build ─────────────────────────────────────────────────
-FROM oven/bun:1.1 AS build
+FROM oven/bun:1.2 AS build
 WORKDIR /app
 ENV NODE_ENV=production
 
