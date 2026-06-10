@@ -1,0 +1,40 @@
+# Source control & editor
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+
+# Dependencies (will be installed fresh inside the image)
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs (will be regenerated)
+.output
+.vinxi
+.tanstack
+.nitro
+.wrangler
+dist
+dist-ssr
+build
+
+# Logs & local env overrides
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env.local
+.env.*.local
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# Docs / assets that don't belong in the runtime image
+docs
+*.md
+!README.md
+.lovable
