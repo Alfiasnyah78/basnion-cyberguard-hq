@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Force the Node.js server preset for Docker / self-hosted builds.
+  // Inside the Lovable preview build, the preset is forced to Cloudflare
+  // automatically and this override is ignored.
+  nitro: { preset: "node-server" },
 });
