@@ -16,8 +16,17 @@ Web akan tersedia di **http://localhost:3618**.
 ## 2. Build & Run (single command)
 
 ```bash
-docker compose up -d --build
+# WAJIB: aktifkan BuildKit (auto pada Docker 23+ / Compose v2)
+DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 \
+  docker compose up -d --build
 ```
+
+> ⚡ **Speed tips** (build pertama tetap ~2–4 menit, rebuild < 30 detik):
+> - Dockerfile sudah pakai **BuildKit cache mounts** untuk `bun install` & Vite — rebuild setelah ubah kode hanya re-run step `build`, bukan re-install dependency.
+> - `.dockerignore` sudah exclude `node_modules`, `.output`, `.git`, `docs/` — context transfer ke Docker daemon jadi kecil.
+> - Multi-stage: image final hanya berisi `.output` (≈ 80 MB), bukan full `node_modules`.
+> - Kalau build masih lama, cek: `docker buildx du` (cache usage) dan `docker system prune -f` (bersihkan layer lama yang nyangkut).
+> - **Tanpa BuildKit** (Docker lama), cache mounts diabaikan → build akan jauh lebih lambat. Upgrade Docker ke v23+.
 
 Container yang dijalankan:
 

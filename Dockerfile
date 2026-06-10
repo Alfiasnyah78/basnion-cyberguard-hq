@@ -1,25 +1,42 @@
+# syntax=docker/dockerfile:1.7
 # ───── Basnion — Production Dockerfile ─────
-# Multi-stage build for the TanStack Start app
+# Multi-stage build with BuildKit cache mounts.
+# Rebuilds after a code change finish in seconds because
+# bun's install + Vite caches are persisted across builds.
+#
+# Requires BuildKit (default in Docker 23+ / Compose v2).
 
+# ── deps ──────────────────────────────────────────────────
 FROM oven/bun:1.1 AS deps
 WORKDIR /app
-COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile
 
+# Only copy manifests first → this layer is cached as long as
+# package.json / bun.lock don't change.
+COPY package.json bun.lock* bunfig.toml* ./
+
+RUN --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
+    bun install --frozen-lockfile
+
+# ── build ─────────────────────────────────────────────────
 FROM oven/bun:1.1 AS build
 WORKDIR /app
+ENV NODE_ENV=production
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NODE_ENV=production
-RUN bun run build
 
+RUN --mount=type=cache,target=/app/node_modules/.vite,sharing=locked \
+    --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
+    bun run build
+
+# ── runtime (slim) ────────────────────────────────────────
 FROM oven/bun:1.1-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3618
-ENV HOST=0.0.0.0
+ENV NODE_ENV=production \
+    PORT=3618 \
+    HOST=0.0.0.0
 
-# Copy build output + minimal runtime files
+# Only ship the build output + package manifest → image stays small.
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/package.json ./package.json
 
