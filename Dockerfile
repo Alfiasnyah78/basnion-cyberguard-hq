@@ -7,7 +7,7 @@
 # Requires BuildKit (default in Docker 23+ / Compose v2).
 
 # ── deps ──────────────────────────────────────────────────
-FROM oven/bun:1.1 AS deps
+FROM oven/bun:1.2 AS deps
 WORKDIR /app
 
 # Only copy manifests first → this layer is cached as long as
