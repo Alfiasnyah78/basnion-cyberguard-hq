@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Basnion local stack
 # - web : TanStack Start app on http://localhost:3618
 # - db  : MySQL 8 local database on localhost:3306

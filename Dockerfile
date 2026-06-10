@@ -7,7 +7,7 @@
 # Requires BuildKit (default in Docker 23+ / Compose v2).
 
 # ── deps ──────────────────────────────────────────────────
-FROM oven/bun:1.1 AS deps
+FROM oven/bun:1.2 AS deps
 WORKDIR /app
 
 # Only copy manifests first → this layer is cached as long as
@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --frozen-lockfile
 
 # ── build ─────────────────────────────────────────────────
-FROM oven/bun:1.1 AS build
+FROM oven/bun:1.2 AS build
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/app/node_modules/.vite,sharing=locked \
     bun run build
 
 # ── runtime (slim) ────────────────────────────────────────
-FROM oven/bun:1.1-slim AS runner
+FROM oven/bun:1.2-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3618 \
