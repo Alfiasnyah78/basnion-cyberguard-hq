@@ -31,7 +31,7 @@ export function Navbar() {
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2 group min-w-0 shrink-0">
           <BrandLogo className="h-9 w-9 sm:h-10 sm:w-10 group-hover:drop-shadow-[0_0_8px_oklch(0.85_0.25_145)] transition" />
-          <span className="font-display font-bold tracking-widest text-base sm:text-lg hidden xs:inline">BASNION</span>
+          <span className="font-display font-bold tracking-widest text-base sm:text-lg hidden sm:inline">BASNION</span>
         </Link>
         <ul className="hidden lg:flex items-center gap-1 min-w-0">
           {sections.map(s => (
