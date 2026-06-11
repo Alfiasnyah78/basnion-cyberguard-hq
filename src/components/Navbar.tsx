@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logoAsset from "@/assets/basnion-logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useEffect, useState } from "react";
 
 const sections = [
@@ -28,16 +28,16 @@ export function Navbar() {
         scrolled ? "bg-background/80 backdrop-blur-xl border-b border-primary/20" : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <img src={logoAsset.url} alt="Basnion" className="h-10 w-10 group-hover:drop-shadow-[0_0_8px_oklch(0.85_0.25_145)] transition" />
-          <span className="font-display font-bold tracking-widest text-lg hidden sm:inline">BASNION</span>
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <Link to="/" className="flex items-center gap-2 group min-w-0 shrink-0">
+          <BrandLogo className="h-9 w-9 sm:h-10 sm:w-10 group-hover:drop-shadow-[0_0_8px_oklch(0.85_0.25_145)] transition" />
+          <span className="font-display font-bold tracking-widest text-base sm:text-lg hidden xs:inline">BASNION</span>
         </Link>
-        <ul className="hidden md:flex items-center gap-1">
+        <ul className="hidden lg:flex items-center gap-1 min-w-0">
           {sections.map(s => (
             <li key={s.id}>
               <a
-                href={`#${s.id}`}
+                href={`/#${s.id}`}
                 className="px-3 py-2 text-sm font-mono text-muted-foreground hover:text-primary transition-colors relative group"
               >
                 <span className="text-primary/60">./</span>{s.label.toLowerCase()}
@@ -45,11 +45,16 @@ export function Navbar() {
               </a>
             </li>
           ))}
+          <li>
+            <Link to="/blog" className="px-3 py-2 text-sm font-mono text-primary hover:text-primary/80 transition-colors">
+              <span className="text-primary/60">./</span>blog
+            </Link>
+          </li>
         </ul>
         <button
           onClick={() => setOpen(o => !o)}
           aria-label="menu"
-          className="md:hidden p-2 text-primary"
+          className="lg:hidden p-2 text-primary shrink-0"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             {open ? <path d="M6 6l12 12M6 18L18 6" /> : <path d="M3 6h18M3 12h18M3 18h18" />}
@@ -57,12 +62,12 @@ export function Navbar() {
         </button>
       </nav>
       {open && (
-        <div className="md:hidden border-t border-primary/20 bg-background/95 backdrop-blur-xl">
+        <div className="lg:hidden border-t border-primary/20 bg-background/95 backdrop-blur-xl">
           <ul className="px-6 py-4 space-y-2">
             {sections.map(s => (
               <li key={s.id}>
                 <a
-                  href={`#${s.id}`}
+                  href={`/#${s.id}`}
                   onClick={() => setOpen(false)}
                   className="block py-2 font-mono text-sm text-muted-foreground hover:text-primary"
                 >
@@ -70,6 +75,11 @@ export function Navbar() {
                 </a>
               </li>
             ))}
+            <li>
+              <Link to="/blog" onClick={() => setOpen(false)} className="block py-2 font-mono text-sm text-primary">
+                <span className="text-primary/60">./</span>blog
+              </Link>
+            </li>
           </ul>
         </div>
       )}

@@ -9,10 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Hosu35HioasssIndexRouteImport } from './routes/Hosu35Hioasss.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as Hosu35HioasssDashboardRouteImport } from './routes/Hosu35Hioasss.dashboard'
 
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -23,6 +30,11 @@ const Hosu35HioasssIndexRoute = Hosu35HioasssIndexRouteImport.update({
   path: '/Hosu35Hioasss/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const Hosu35HioasssDashboardRoute = Hosu35HioasssDashboardRouteImport.update({
   id: '/Hosu35Hioasss/dashboard',
   path: '/Hosu35Hioasss/dashboard',
@@ -31,36 +43,66 @@ const Hosu35HioasssDashboardRoute = Hosu35HioasssDashboardRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/blog': typeof BlogRouteWithChildren
   '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/Hosu35Hioasss/': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/blog': typeof BlogRouteWithChildren
   '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/Hosu35Hioasss': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/blog': typeof BlogRouteWithChildren
   '/Hosu35Hioasss/dashboard': typeof Hosu35HioasssDashboardRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/Hosu35Hioasss/': typeof Hosu35HioasssIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss/'
+  fullPaths:
+    | '/'
+    | '/blog'
+    | '/Hosu35Hioasss/dashboard'
+    | '/blog/$slug'
+    | '/Hosu35Hioasss/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss'
-  id: '__root__' | '/' | '/Hosu35Hioasss/dashboard' | '/Hosu35Hioasss/'
+  to:
+    | '/'
+    | '/blog'
+    | '/Hosu35Hioasss/dashboard'
+    | '/blog/$slug'
+    | '/Hosu35Hioasss'
+  id:
+    | '__root__'
+    | '/'
+    | '/blog'
+    | '/Hosu35Hioasss/dashboard'
+    | '/blog/$slug'
+    | '/Hosu35Hioasss/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BlogRoute: typeof BlogRouteWithChildren
   Hosu35HioasssDashboardRoute: typeof Hosu35HioasssDashboardRoute
   Hosu35HioasssIndexRoute: typeof Hosu35HioasssIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -75,6 +117,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Hosu35HioasssIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/Hosu35Hioasss/dashboard': {
       id: '/Hosu35Hioasss/dashboard'
       path: '/Hosu35Hioasss/dashboard'
@@ -85,8 +134,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BlogRoute: BlogRouteWithChildren,
   Hosu35HioasssDashboardRoute: Hosu35HioasssDashboardRoute,
   Hosu35HioasssIndexRoute: Hosu35HioasssIndexRoute,
 }
