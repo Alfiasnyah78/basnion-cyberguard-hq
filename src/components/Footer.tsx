@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/basnion-logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Instagram, Linkedin, Github, Twitter, Youtube, Mail, Globe } from "lucide-react";
 import { useSiteContent, type SocialLink } from "@/lib/site-content";
 
@@ -20,7 +20,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 grid md:grid-cols-3 gap-10">
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <img src={logoAsset.url} alt="Basnion" className="h-12 w-12" />
+            <BrandLogo className="h-12 w-12" />
             <div>
               <div className="font-display font-bold text-xl tracking-widest">BASNION</div>
               <div className="text-xs font-mono text-primary/70">Harbas Onion CTF</div>

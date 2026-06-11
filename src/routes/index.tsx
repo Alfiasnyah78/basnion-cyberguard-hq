@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import logoAsset from "@/assets/basnion-logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
+import { useSignedUrl } from "@/lib/storage";
 import { MatrixRain } from "@/components/MatrixRain";
 import { Terminal } from "@/components/Terminal";
 import { Navbar } from "@/components/Navbar";
@@ -103,7 +104,7 @@ function Landing() {
 
           <div className="relative flex justify-center lg:justify-end">
             <div className="absolute -inset-10 bg-primary/20 blur-3xl rounded-full animate-pulse-neon" />
-            <img src={logoAsset.url} alt="Basnion Logo" className="relative w-[340px] sm:w-[440px] animate-float-slow drop-shadow-[0_0_40px_oklch(0.85_0.25_145/0.5)]" />
+            <BrandLogo className="relative w-[260px] sm:w-[340px] lg:w-[440px] animate-float-slow drop-shadow-[0_0_40px_oklch(0.85_0.25_145/0.5)]" alt="Basnion Logo" />
             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
           </div>
         </div>
@@ -296,14 +297,7 @@ function Landing() {
           {gallery && gallery.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {gallery.map((g) => (
-                <figure key={g.id} className="group relative rounded-xl overflow-hidden neon-border bg-card aspect-[4/3]">
-                  <img src={g.image_url} alt={g.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-80" />
-                  <figcaption className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="font-display font-bold text-lg">{g.title}</h3>
-                    {g.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{g.description}</p>}
-                  </figcaption>
-                </figure>
+                <GalleryFigure key={g.id} item={g} />
               ))}
             </div>
           ) : (
@@ -325,5 +319,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-neon" />
       {children}
     </div>
+  );
+}
+
+function GalleryFigure({ item }: { item: { id: string; title: string; description: string | null; image_url: string } }) {
+  const { data: signed } = useSignedUrl("gallery", item.image_url);
+  const src = /^https?:\/\//i.test(item.image_url) ? item.image_url : signed;
+  return (
+    <figure className="group relative rounded-xl overflow-hidden neon-border bg-card aspect-[4/3]">
+      {src ? (
+        <img src={src} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+        <div className="w-full h-full bg-input animate-pulse" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-80" />
+      <figcaption className="absolute bottom-0 left-0 right-0 p-4">
+        <h3 className="font-display font-bold text-lg">{item.title}</h3>
+        {item.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>}
+      </figcaption>
+    </figure>
   );
 }

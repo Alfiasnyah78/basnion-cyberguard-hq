@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import logoAsset from "@/assets/basnion-logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { toast } from "sonner";
 import { DEFAULT_SITE_CONTENT, SITE_CONTENT_KEY, type SiteContent, type SocialLink } from "@/lib/site-content";
-import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw } from "lucide-react";
+import { GalleryUploadManager } from "@/components/admin/GalleryUploadManager";
+import { BlogManager } from "@/components/admin/BlogManager";
+import { LogoManager } from "@/components/admin/LogoManager";
+import { SecurityManager } from "@/components/admin/SecurityManager";
+import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw, ImagePlus, Newspaper, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   head: () => ({
@@ -17,7 +21,7 @@ export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "content" | "gallery" | "programs";
+type Tab = "content" | "logo" | "gallery" | "programs" | "blog" | "security";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -59,40 +63,43 @@ function AdminDashboard() {
       <header className="border-b border-primary/20 bg-card/50 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoAsset.url} alt="" className="h-9 w-9" />
-            <div>
+            <BrandLogo className="h-9 w-9" alt="" />
+            <div className="min-w-0">
               <div className="font-display font-bold tracking-wider">BASNION</div>
               <div className="text-[10px] font-mono text-primary flex items-center gap-1">
                 <ShieldCheck size={10} /> ADMIN PANEL
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/" className="hidden sm:inline-flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-primary">
               <ExternalLink size={12} /> view site
             </Link>
-            <span className="hidden md:inline text-xs font-mono text-muted-foreground">{email}</span>
+            <span className="hidden md:inline text-xs font-mono text-muted-foreground truncate max-w-[200px]">{email}</span>
             <button onClick={logout} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-destructive/40 text-destructive font-mono text-xs hover:bg-destructive/10">
-              <LogOut size={14} /> logout
+              <LogOut size={14} /> <span className="hidden sm:inline">logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-        <h1 className="font-display font-black text-3xl mb-2">Content Management</h1>
-        <p className="font-mono text-sm text-muted-foreground">&gt; kelola semua konten landing page basnion</p>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="font-display font-black text-2xl sm:text-3xl mb-2">Content Management</h1>
+        <p className="font-mono text-xs sm:text-sm text-muted-foreground">&gt; kelola semua konten landing page basnion</p>
 
-        <div className="flex gap-2 mt-6 border-b border-primary/20 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 mt-6 border-b border-primary/20 overflow-x-auto scrollbar-thin">
           {([
             ["content", "Site Content", FileText],
+            ["logo", "Logo", ImagePlus],
             ["gallery", "Gallery", ImageIcon],
             ["programs", "Programs", Trophy],
+            ["blog", "Blog", Newspaper],
+            ["security", "Security", Lock],
           ] as const).map(([key, label, Icon]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 font-mono text-sm border-b-2 transition whitespace-nowrap ${
+              className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 font-mono text-xs sm:text-sm border-b-2 transition whitespace-nowrap ${
                 tab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -103,8 +110,11 @@ function AdminDashboard() {
 
         <div className="mt-6">
           {tab === "content" && <SiteContentManager />}
-          {tab === "gallery" && <GalleryManager />}
+          {tab === "logo" && <LogoManager />}
+          {tab === "gallery" && <GalleryUploadManager />}
           {tab === "programs" && <ProgramsManager />}
+          {tab === "blog" && <BlogManager />}
+          {tab === "security" && <SecurityManager />}
         </div>
       </div>
     </div>
@@ -359,94 +369,7 @@ function ObjectList<T extends Record<string, string>>({
   );
 }
 
-/* ═══════════════════════ GALLERY ═══════════════════════ */
-
-function GalleryManager() {
-  const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-gallery"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("gallery_items").select("*").order("sort_order").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const [form, setForm] = useState({ title: "", description: "", image_url: "", sort_order: 0 });
-
-  const createItem = useMutation({
-    mutationFn: async (payload: typeof form) => {
-      const { error } = await supabase.from("gallery_items").insert(payload);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Gallery item added");
-      setForm({ title: "", description: "", image_url: "", sort_order: 0 });
-      qc.invalidateQueries({ queryKey: ["admin-gallery"] });
-      qc.invalidateQueries({ queryKey: ["gallery"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteItem = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("gallery_items").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Deleted");
-      qc.invalidateQueries({ queryKey: ["admin-gallery"] });
-      qc.invalidateQueries({ queryKey: ["gallery"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
-      <form
-        onSubmit={e => { e.preventDefault(); if (!form.title || !form.image_url) return; createItem.mutate(form); }}
-        className="glass-card rounded-xl p-5 neon-border space-y-3 h-fit"
-      >
-        <h3 className="font-display font-bold flex items-center gap-2">
-          <Plus size={16} className="text-primary" /> Add Gallery Item
-        </h3>
-        <Input label="title" value={form.title} onChange={v => setForm({ ...form, title: v })} required />
-        <Input label="image_url" value={form.image_url} onChange={v => setForm({ ...form, image_url: v })} required placeholder="https://..." />
-        <Textarea label="description" value={form.description} onChange={v => setForm({ ...form, description: v })} />
-        <Input label="sort_order" type="number" value={String(form.sort_order)} onChange={v => setForm({ ...form, sort_order: Number(v) || 0 })} />
-        <button type="submit" disabled={createItem.isPending} className="w-full py-2 rounded-md bg-primary text-primary-foreground font-mono font-semibold neon-glow disabled:opacity-50">
-          {createItem.isPending ? "saving..." : "./save"}
-        </button>
-        <p className="text-[10px] font-mono text-muted-foreground">&gt; tip: paste public image URL (imgur, cloudinary, dll)</p>
-      </form>
-
-      <div className="space-y-3">
-        {isLoading && <Loader2 className="animate-spin text-primary" />}
-        {data?.length === 0 && (
-          <div className="glass-card rounded-xl p-10 text-center font-mono text-sm text-muted-foreground">&gt; no gallery items yet</div>
-        )}
-        <div className="grid sm:grid-cols-2 gap-3">
-          {data?.map(item => (
-            <div key={item.id} className="glass-card rounded-lg overflow-hidden neon-border group">
-              <div className="aspect-video bg-input overflow-hidden">
-                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-              </div>
-              <div className="p-3 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-display font-semibold leading-tight">{item.title}</h4>
-                  <button onClick={() => { if (confirm("Delete this item?")) deleteItem.mutate(item.id); }} className="text-destructive hover:text-destructive/80" aria-label="delete">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-                {item.description && <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+/* (legacy GalleryManager removed — replaced by GalleryUploadManager) */
 
 /* ═══════════════════════ PROGRAMS ═══════════════════════ */
 
