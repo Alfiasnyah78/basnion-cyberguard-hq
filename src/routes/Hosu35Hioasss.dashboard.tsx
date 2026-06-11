@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import logoAsset from "@/assets/basnion-logo.png.asset.json";
+import { BrandLogo } from "@/components/BrandLogo";
 import { toast } from "sonner";
 import { DEFAULT_SITE_CONTENT, SITE_CONTENT_KEY, type SiteContent, type SocialLink } from "@/lib/site-content";
-import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw } from "lucide-react";
+import { GalleryUploadManager } from "@/components/admin/GalleryUploadManager";
+import { BlogManager } from "@/components/admin/BlogManager";
+import { LogoManager } from "@/components/admin/LogoManager";
+import { SecurityManager } from "@/components/admin/SecurityManager";
+import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw, ImagePlus, Newspaper, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   head: () => ({
@@ -17,7 +21,7 @@ export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "content" | "gallery" | "programs";
+type Tab = "content" | "logo" | "gallery" | "programs" | "blog" | "security";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -59,40 +63,43 @@ function AdminDashboard() {
       <header className="border-b border-primary/20 bg-card/50 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoAsset.url} alt="" className="h-9 w-9" />
-            <div>
+            <BrandLogo className="h-9 w-9" alt="" />
+            <div className="min-w-0">
               <div className="font-display font-bold tracking-wider">BASNION</div>
               <div className="text-[10px] font-mono text-primary flex items-center gap-1">
                 <ShieldCheck size={10} /> ADMIN PANEL
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/" className="hidden sm:inline-flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-primary">
               <ExternalLink size={12} /> view site
             </Link>
-            <span className="hidden md:inline text-xs font-mono text-muted-foreground">{email}</span>
+            <span className="hidden md:inline text-xs font-mono text-muted-foreground truncate max-w-[200px]">{email}</span>
             <button onClick={logout} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-destructive/40 text-destructive font-mono text-xs hover:bg-destructive/10">
-              <LogOut size={14} /> logout
+              <LogOut size={14} /> <span className="hidden sm:inline">logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-        <h1 className="font-display font-black text-3xl mb-2">Content Management</h1>
-        <p className="font-mono text-sm text-muted-foreground">&gt; kelola semua konten landing page basnion</p>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="font-display font-black text-2xl sm:text-3xl mb-2">Content Management</h1>
+        <p className="font-mono text-xs sm:text-sm text-muted-foreground">&gt; kelola semua konten landing page basnion</p>
 
-        <div className="flex gap-2 mt-6 border-b border-primary/20 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 mt-6 border-b border-primary/20 overflow-x-auto scrollbar-thin">
           {([
             ["content", "Site Content", FileText],
+            ["logo", "Logo", ImagePlus],
             ["gallery", "Gallery", ImageIcon],
             ["programs", "Programs", Trophy],
+            ["blog", "Blog", Newspaper],
+            ["security", "Security", Lock],
           ] as const).map(([key, label, Icon]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 font-mono text-sm border-b-2 transition whitespace-nowrap ${
+              className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 font-mono text-xs sm:text-sm border-b-2 transition whitespace-nowrap ${
                 tab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -103,8 +110,11 @@ function AdminDashboard() {
 
         <div className="mt-6">
           {tab === "content" && <SiteContentManager />}
-          {tab === "gallery" && <GalleryManager />}
+          {tab === "logo" && <LogoManager />}
+          {tab === "gallery" && <GalleryUploadManager />}
           {tab === "programs" && <ProgramsManager />}
+          {tab === "blog" && <BlogManager />}
+          {tab === "security" && <SecurityManager />}
         </div>
       </div>
     </div>
