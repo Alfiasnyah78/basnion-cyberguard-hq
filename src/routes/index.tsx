@@ -321,3 +321,22 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+function GalleryFigure({ item }: { item: { id: string; title: string; description: string | null; image_url: string } }) {
+  const { data: signed } = useSignedUrl("gallery", item.image_url);
+  const src = /^https?:\/\//i.test(item.image_url) ? item.image_url : signed;
+  return (
+    <figure className="group relative rounded-xl overflow-hidden neon-border bg-card aspect-[4/3]">
+      {src ? (
+        <img src={src} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+        <div className="w-full h-full bg-input animate-pulse" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-80" />
+      <figcaption className="absolute bottom-0 left-0 right-0 p-4">
+        <h3 className="font-display font-bold text-lg">{item.title}</h3>
+        {item.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>}
+      </figcaption>
+    </figure>
+  );
+}
