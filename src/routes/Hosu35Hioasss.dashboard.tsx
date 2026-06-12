@@ -151,6 +151,7 @@ function SiteContentManager() {
     },
     onSuccess: () => {
       toast.success("Konten tersimpan");
+      void logAudit("site_content_update", { target: SITE_CONTENT_KEY });
       qc.invalidateQueries({ queryKey: ["admin-site-content"] });
       qc.invalidateQueries({ queryKey: ["site_content"] });
     },
