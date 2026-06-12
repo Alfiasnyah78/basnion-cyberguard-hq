@@ -9,7 +9,9 @@ import { GalleryUploadManager } from "@/components/admin/GalleryUploadManager";
 import { BlogManager } from "@/components/admin/BlogManager";
 import { LogoManager } from "@/components/admin/LogoManager";
 import { SecurityManager } from "@/components/admin/SecurityManager";
-import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw, ImagePlus, Newspaper, Lock } from "lucide-react";
+import { AuditLogManager } from "@/components/admin/AuditLogManager";
+import { logAudit } from "@/lib/audit";
+import { Loader2, LogOut, Plus, Trash2, Image as ImageIcon, Trophy, ExternalLink, ShieldCheck, FileText, Save, RotateCcw, ImagePlus, Newspaper, Lock, ScrollText } from "lucide-react";
 
 export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   head: () => ({
@@ -21,7 +23,7 @@ export const Route = createFileRoute("/Hosu35Hioasss/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "content" | "logo" | "gallery" | "programs" | "blog" | "security";
+type Tab = "content" | "logo" | "gallery" | "programs" | "blog" | "security" | "audit";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ function AdminDashboard() {
   }, [navigate]);
 
   const logout = async () => {
+    await logAudit("logout");
     await supabase.auth.signOut();
     toast.success("Logged out");
     navigate({ to: "/Hosu35Hioasss" });
@@ -95,6 +98,7 @@ function AdminDashboard() {
             ["programs", "Programs", Trophy],
             ["blog", "Blog", Newspaper],
             ["security", "Security", Lock],
+            ["audit", "Audit Log", ScrollText],
           ] as const).map(([key, label, Icon]) => (
             <button
               key={key}
@@ -115,6 +119,7 @@ function AdminDashboard() {
           {tab === "programs" && <ProgramsManager />}
           {tab === "blog" && <BlogManager />}
           {tab === "security" && <SecurityManager />}
+          {tab === "audit" && <AuditLogManager />}
         </div>
       </div>
     </div>
