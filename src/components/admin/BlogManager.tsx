@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TiptapEditor } from "./TiptapEditor";
 import { useSignedUrl, safeFileName } from "@/lib/storage";
-import { ExternalLink, FileText, Loader2, Plus, Trash2, Upload, X, Eye, EyeOff } from "lucide-react";
+import { logAudit } from "@/lib/audit";
+import { ExternalLink, FileText, Loader2, Plus, Trash2, Upload, X, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 type BlogPost = {
   id: string;
