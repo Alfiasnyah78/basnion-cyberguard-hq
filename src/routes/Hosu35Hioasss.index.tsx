@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { MatrixRain } from "@/components/MatrixRain";
 import { toast } from "sonner";
 import { Lock, Mail, Loader2, ShieldAlert, Smartphone } from "lucide-react";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/Hosu35Hioasss/")({
   head: () => ({
@@ -35,6 +36,7 @@ function AdminLogin() {
       await supabase.auth.signOut();
       throw new Error("Akses ditolak. Role admin diperlukan.");
     }
+    void logAudit("login");
     toast.success("Authentication successful");
     navigate({ to: "/Hosu35Hioasss/dashboard" });
   };
@@ -86,6 +88,7 @@ function AdminLogin() {
       }
       await finishLogin(data.user.id);
     } catch (err) {
+      void logAudit("login_failed", { details: { email, reason: err instanceof Error ? err.message : "unknown" } });
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
