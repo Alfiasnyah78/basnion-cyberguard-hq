@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSignedUrl, safeFileName } from "@/lib/storage";
+import { logAudit } from "@/lib/audit";
 import { Loader2, Plus, Trash2, Upload } from "lucide-react";
 
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -43,6 +44,7 @@ export function GalleryUploadManager() {
       });
       if (dbErr) throw dbErr;
       toast.success("Gallery item ditambahkan");
+      void logAudit("gallery_upload", { target: path, details: { title: form.title, size: file.size } });
       setForm({ title: "", description: "", sort_order: 0 });
       setFile(null);
       qc.invalidateQueries({ queryKey: ["admin-gallery"] });
@@ -61,6 +63,7 @@ export function GalleryUploadManager() {
       }
       const { error } = await supabase.from("gallery_items").delete().eq("id", item.id);
       if (error) throw error;
+      void logAudit("gallery_delete", { target: item.image_url });
     },
     onSuccess: () => {
       toast.success("Deleted");

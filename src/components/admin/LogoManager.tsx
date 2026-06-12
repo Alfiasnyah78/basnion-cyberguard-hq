@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LOGO_BUCKET, LOGO_PATH_KEY, useLogoUrl, safeFileName } from "@/lib/storage";
+import { logAudit } from "@/lib/audit";
 import logoAsset from "@/assets/basnion-logo.png.asset.json";
 import { ImagePlus, Loader2, RotateCcw, Upload } from "lucide-react";
 
@@ -34,6 +35,7 @@ export function LogoManager() {
       if (dbErr) throw dbErr;
 
       toast.success("Logo diperbarui — langsung tampil di website");
+      void logAudit("logo_change", { target: path, details: { size: file.size, type: file.type } });
       qc.invalidateQueries({ queryKey: ["site_setting", LOGO_PATH_KEY] });
       qc.invalidateQueries({ queryKey: ["signed-url", LOGO_BUCKET] });
     } catch (e) {
@@ -48,6 +50,7 @@ export function LogoManager() {
     const { error } = await supabase.from("site_settings").delete().eq("key", LOGO_PATH_KEY);
     if (error) return toast.error(error.message);
     toast.success("Logo direset ke default");
+    void logAudit("logo_reset");
     qc.invalidateQueries({ queryKey: ["site_setting", LOGO_PATH_KEY] });
   };
 

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { logAudit } from "@/lib/audit";
 import { ShieldCheck, ShieldAlert, KeyRound, Loader2, Trash2, Smartphone, Check } from "lucide-react";
 
 export function SecurityManager() {
@@ -70,6 +71,7 @@ function TwoFactorPanel() {
       });
       if (e2) throw e2;
       toast.success("2FA aktif");
+      void logAudit("mfa_enabled", { target: enrolling.id });
       setEnrolling(null);
       setCode("");
       qc.invalidateQueries({ queryKey: ["mfa-factors"] });
@@ -85,6 +87,7 @@ function TwoFactorPanel() {
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
     if (error) return toast.error(error.message);
     toast.success("2FA dinonaktifkan");
+    void logAudit("mfa_disabled", { target: factorId });
     qc.invalidateQueries({ queryKey: ["mfa-factors"] });
   };
 
@@ -189,6 +192,7 @@ function PasswordPanel() {
       const { error } = await supabase.auth.updateUser({ password: newPw });
       if (error) throw error;
       toast.success("Password berhasil diganti");
+      void logAudit("password_change");
       setOldPw(""); setNewPw(""); setConfirm("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal");

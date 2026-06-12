@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TiptapEditor } from "./TiptapEditor";
 import { useSignedUrl, safeFileName } from "@/lib/storage";
-import { ExternalLink, FileText, Loader2, Plus, Trash2, Upload, X, Eye, EyeOff } from "lucide-react";
+import { logAudit } from "@/lib/audit";
+import { ExternalLink, FileText, Loader2, Plus, Trash2, Upload, X, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 type BlogPost = {
   id: string;
@@ -41,6 +42,7 @@ export function BlogManager() {
       if (p.pdf_path) await supabase.storage.from("blog").remove([p.pdf_path]);
       const { error } = await supabase.from("blog_posts").delete().eq("id", p.id);
       if (error) throw error;
+      void logAudit("blog_delete", { target: p.slug, details: { title: p.title } });
     },
     onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-blog"] }); qc.invalidateQueries({ queryKey: ["blog-list"] }); },
     onError: (e: Error) => toast.error(e.message),
@@ -109,22 +111,55 @@ function PostEditor({ post, onClose }: { post: BlogPost | null; onClose: () => v
   const [pdfPath, setPdfPath] = useState(post?.pdf_path ?? "");
   const [published, setPublished] = useState(post?.published ?? false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfValid, setPdfValid] = useState<{ ok: boolean; reason?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const pdfRef = useRef<HTMLInputElement | null>(null);
   const { data: pdfUrl } = useSignedUrl("blog", pdfPath);
+
+  // Local object URL for selected file (thumbnail preview before upload)
+  const localPdfUrl = useMemo(() => (pdfFile ? URL.createObjectURL(pdfFile) : null), [pdfFile]);
+  useEffect(() => () => { if (localPdfUrl) URL.revokeObjectURL(localPdfUrl); }, [localPdfUrl]);
+
+  const previewUrl = localPdfUrl ?? pdfUrl ?? null;
+  const fmtBytes = (n: number) => n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(2)} MB`;
+
+  // PDF magic byte validator (%PDF-) — runs on file pick
+  const handlePdfPick = async (f: File | null) => {
+    setPdfFile(f);
+    setPdfValid(null);
+    if (!f) return;
+    try {
+      if (f.type && f.type !== "application/pdf") {
+        setPdfValid({ ok: false, reason: `MIME tidak valid: ${f.type}` }); return;
+      }
+      if (!/\.pdf$/i.test(f.name)) {
+        setPdfValid({ ok: false, reason: "Ekstensi harus .pdf" }); return;
+      }
+      if (f.size > 20 * 1024 * 1024) {
+        setPdfValid({ ok: false, reason: "Ukuran > 20 MB" }); return;
+      }
+      const head = new Uint8Array(await f.slice(0, 5).arrayBuffer());
+      const magic = String.fromCharCode(...head);
+      if (!magic.startsWith("%PDF-")) {
+        setPdfValid({ ok: false, reason: "Bukan file PDF (magic bytes hilang)" }); return;
+      }
+      setPdfValid({ ok: true });
+    } catch {
+      setPdfValid({ ok: false, reason: "Gagal membaca file" });
+    }
+  };
 
   const save = async () => {
     if (!title.trim()) return toast.error("Title wajib");
     const finalSlug = (slug || slugify(title)).trim();
     if (!finalSlug) return toast.error("Slug invalid");
     if (!contentHtml.trim() && !pdfFile && !pdfPath) return toast.error("Isi write-up atau upload PDF");
+    if (pdfFile && pdfValid && !pdfValid.ok) return toast.error(`PDF tidak valid: ${pdfValid.reason}`);
 
     setBusy(true);
     try {
       let nextPdf = pdfPath;
       if (pdfFile) {
-        if (pdfFile.type !== "application/pdf") throw new Error("File harus PDF");
-        if (pdfFile.size > 20 * 1024 * 1024) throw new Error("PDF maks 20 MB");
         const path = `${Date.now()}-${safeFileName(pdfFile.name)}`;
         const { error: upErr } = await supabase.storage.from("blog").upload(path, pdfFile, { contentType: "application/pdf" });
         if (upErr) throw upErr;
@@ -143,12 +178,17 @@ function PostEditor({ post, onClose }: { post: BlogPost | null; onClose: () => v
         published_at: published ? (post?.published_at ?? new Date().toISOString()) : null,
       };
 
+      const wasPublished = post?.published ?? false;
       if (post) {
         const { error } = await supabase.from("blog_posts").update(payload).eq("id", post.id);
         if (error) throw error;
+        void logAudit("blog_update", { target: finalSlug, details: { title: payload.title } });
+        if (published && !wasPublished) void logAudit("blog_publish", { target: finalSlug });
       } else {
         const { error } = await supabase.from("blog_posts").insert(payload);
         if (error) throw error;
+        void logAudit("blog_create", { target: finalSlug, details: { title: payload.title, published } });
+        if (published) void logAudit("blog_publish", { target: finalSlug });
       }
       toast.success("Post tersimpan");
       onClose();
@@ -160,7 +200,7 @@ function PostEditor({ post, onClose }: { post: BlogPost | null; onClose: () => v
   };
 
   const removePdf = async () => {
-    if (!pdfPath) { setPdfFile(null); return; }
+    if (!pdfPath) { setPdfFile(null); setPdfValid(null); return; }
     if (!confirm("Hapus PDF?")) return;
     await supabase.storage.from("blog").remove([pdfPath]);
     setPdfPath("");
@@ -210,7 +250,7 @@ function PostEditor({ post, onClose }: { post: BlogPost | null; onClose: () => v
 
       <div className="glass-card rounded-xl p-5 neon-border space-y-3">
         <h3 className="font-display font-bold tracking-widest text-primary text-sm">// PDF ATTACHMENT</h3>
-        <input ref={pdfRef} type="file" accept="application/pdf" className="hidden" onChange={e => setPdfFile(e.target.files?.[0] ?? null)} />
+        <input ref={pdfRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => handlePdfPick(e.target.files?.[0] ?? null)} />
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => pdfRef.current?.click()} className="px-4 py-2 rounded-md border border-dashed border-primary/40 font-mono text-xs text-primary hover:bg-primary/5 inline-flex items-center gap-2">
             <Upload size={14} /> {pdfFile ? pdfFile.name : (pdfPath ? "ganti PDF" : "pilih PDF")}
@@ -220,14 +260,47 @@ function PostEditor({ post, onClose }: { post: BlogPost | null; onClose: () => v
               <Trash2 size={12} /> hapus
             </button>
           )}
-          {pdfPath && pdfUrl && (
+          {pdfPath && pdfUrl && !pdfFile && (
             <a href={pdfUrl} target="_blank" rel="noreferrer" className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-xs font-mono ml-auto">
-              <ExternalLink size={12} /> preview saat ini
+              <ExternalLink size={12} /> buka tab
             </a>
           )}
         </div>
-        <p className="text-[10px] font-mono text-muted-foreground">PDF maks 20 MB. Bila ada write-up & PDF, keduanya tampil di halaman post.</p>
+
+        {pdfFile && (
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
+            <span className="text-muted-foreground">{fmtBytes(pdfFile.size)}</span>
+            {pdfValid?.ok ? (
+              <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 size={12} /> valid PDF</span>
+            ) : pdfValid && !pdfValid.ok ? (
+              <span className="inline-flex items-center gap-1 text-destructive"><AlertCircle size={12} /> {pdfValid.reason}</span>
+            ) : (
+              <span className="text-muted-foreground inline-flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> validating...</span>
+            )}
+          </div>
+        )}
+
+        {previewUrl && (!pdfFile || pdfValid?.ok) && (
+          <div className="rounded-md overflow-hidden border border-primary/20 bg-background">
+            <div className="px-3 py-2 border-b border-primary/10 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-muted-foreground">&gt; pratinjau halaman pertama</span>
+              <a href={previewUrl} target="_blank" rel="noreferrer" className="text-[10px] font-mono text-primary inline-flex items-center gap-1">
+                <ExternalLink size={10} /> fullscreen
+              </a>
+            </div>
+            <iframe
+              src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
+              title="PDF preview"
+              className="w-full h-[420px] bg-background"
+            />
+          </div>
+        )}
+
+        <p className="text-[10px] font-mono text-muted-foreground">
+          PDF maks 20 MB · validasi: magic bytes %PDF-, MIME, ekstensi. Pratinjau dirender oleh browser.
+        </p>
       </div>
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSignedUrl } from "@/lib/storage";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ArrowLeft, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, FileText, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
@@ -84,22 +84,31 @@ function BlogPost() {
 
           {post.pdf_path && (
             <div className="mt-10 glass-card rounded-xl p-5 neon-border">
-              <div className="flex items-center gap-3 mb-4">
-                <FileText className="text-primary" size={20} />
-                <div className="min-w-0">
-                  <h3 className="font-display font-bold">PDF Attachment</h3>
-                  <p className="text-xs font-mono text-muted-foreground">&gt; embedded viewer</p>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <FileText className="text-primary shrink-0" size={20} />
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-display font-bold">PDF Write-up</h3>
+                  <p className="text-xs font-mono text-muted-foreground">&gt; pratinjau langsung di bawah · scroll untuk baca</p>
                 </div>
                 {pdfUrl && (
-                  <a href={pdfUrl} target="_blank" rel="noreferrer" className="ml-auto px-3 py-1.5 rounded-md border border-primary/30 text-primary font-mono text-xs hover:bg-primary/10">
-                    open in new tab
-                  </a>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="flex-1 sm:flex-initial px-3 py-1.5 rounded-md border border-primary/30 text-primary font-mono text-xs hover:bg-primary/10 inline-flex items-center justify-center gap-1">
+                      buka tab baru
+                    </a>
+                    <a href={pdfUrl} download className="flex-1 sm:flex-initial px-3 py-1.5 rounded-md bg-primary text-primary-foreground font-mono text-xs font-semibold neon-glow inline-flex items-center justify-center gap-1">
+                      <Download size={12} /> download
+                    </a>
+                  </div>
                 )}
               </div>
               {pdfLoading ? (
                 <div className="aspect-[4/5] grid place-items-center"><Loader2 className="animate-spin text-primary" /></div>
               ) : pdfUrl ? (
-                <iframe src={pdfUrl} title={post.title} className="w-full aspect-[4/5] rounded-md bg-background border border-primary/20" />
+                <iframe
+                  src={`${pdfUrl}#view=FitH`}
+                  title={post.title}
+                  className="w-full h-[70vh] sm:h-[80vh] rounded-md bg-background border border-primary/20"
+                />
               ) : (
                 <p className="text-sm text-destructive font-mono">&gt; gagal memuat PDF</p>
               )}
