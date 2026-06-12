@@ -1,6 +1,10 @@
 # Basnion local stack
+# ─────────────────────
 # - web : TanStack Start app on http://localhost:3618
-# - db  : MySQL 8 local database on localhost:3306
+# - db  : MySQL 8 local database on localhost:3306 (default for `docker compose up`)
+#
+# Production (Vercel) tetap pakai Supabase (Lovable Cloud) — env Supabase di Vercel
+# dashboard, BUKAN di file ini. File ini = stack lokal Docker dengan MySQL.
 
 services:
   web:
@@ -15,18 +19,22 @@ services:
       - NODE_ENV=production
       - PORT=3618
       - HOST=0.0.0.0
-      # Supabase (Lovable Cloud) — fill in via .env
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      # Local MySQL connection (optional — for custom server features)
+      # ── Database lokal (default Docker = MySQL) ──
+      - DB_DRIVER=mysql
       - MYSQL_HOST=db
       - MYSQL_PORT=3306
       - MYSQL_DATABASE=basnion
       - MYSQL_USER=basnion
       - MYSQL_PASSWORD=basnion_secret
+      # ── Supabase OPSIONAL untuk Docker lokal ──
+      # Biarkan kosong agar pakai MySQL saja. Isi hanya jika ingin
+      # mirror dari Lovable Cloud di lokal. Vercel sebaliknya wajib isi
+      # env Supabase di Vercel project settings.
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     depends_on:
       db:
         condition: service_healthy
