@@ -42,6 +42,7 @@ export function BlogManager() {
       if (p.pdf_path) await supabase.storage.from("blog").remove([p.pdf_path]);
       const { error } = await supabase.from("blog_posts").delete().eq("id", p.id);
       if (error) throw error;
+      void logAudit("blog_delete", { target: p.slug, details: { title: p.title } });
     },
     onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-blog"] }); qc.invalidateQueries({ queryKey: ["blog-list"] }); },
     onError: (e: Error) => toast.error(e.message),
